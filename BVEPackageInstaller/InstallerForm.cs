@@ -65,14 +65,54 @@ namespace BVEPackageInstaller
                 //We've selected the second tab and need to load the package information from the archive
                 if (File.Exists(openfile))
                 {
-                    string tempextract = Path.Combine(temppath + "\\packageinfo.bpi");
-                    using (FileStream myStream = new FileStream(tempextract, FileMode.Create))
+                    string tempextract_info = Path.Combine(temppath + "\\packageinfo.bpi");
+                    try
                     {
-                        
-                        var packageinfofile = new SevenZip.SevenZipExtractor(openfile);
-                        packageinfofile.ExtractFile("packageinfo.bpi", myStream);
+                        using (FileStream myStream = new FileStream(tempextract_info, FileMode.Create))
+                        {
+
+                            var packageinfofile = new SevenZip.SevenZipExtractor(openfile);
+                            packageinfofile.ExtractFile("packageinfo.bpi", myStream);
+                        }
                     }
-                    readpackageinfo(tempextract);
+                    catch
+                    {
+                        MessageBox.Show("The selected package appears to be corrupt.");
+                    }
+                    try
+                    {
+                        readpackageinfo(tempextract_info);
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Error reading package information.");
+                    }
+                    //Now extract the image
+                    try
+                    {
+                        string tempextract_image = Path.Combine(temppath + "\\package.png");
+                        using (FileStream myStream = new FileStream(tempextract_image, FileMode.Create))
+                        {
+
+                            var packageimage = new SevenZip.SevenZipExtractor(openfile);
+                            packageimage.ExtractFile("package.png", myStream);
+                        }
+                        //Read the package information
+                        readpackageinfo(tempextract_info);
+                        //Load the image
+                        Bitmap tempimage;
+                        using (FileStream myStream = new FileStream(tempextract_image, FileMode.Open))
+                        {
+                            tempimage = (Bitmap)Image.FromStream(myStream);
+                            tempimage.MakeTransparent(Color.FromArgb(0, 0, 255));
+                            this.pictureBox1.Image = tempimage;
+                            this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                        }
+                    }
+                    catch
+                    {
+                        //No error prompt, just don't load the image
+                    }
                 }
                 break;
             case 3:
@@ -80,28 +120,8 @@ namespace BVEPackageInstaller
                 string extractiondirectory = StartWindowForm.OpenBVELocation + currentpackage.installpath;
                 var installpackage = new SevenZip.SevenZipExtractor(openfile);
                 installpackage.ExtractArchive(Path.Combine(StartWindowForm.OpenBVELocation + "\\" + currentpackage.installpath));
-
-                //So, we've extracted the archive. Now add it to package manager list of installed packages
-                List<string> installedpackages = new List<string>(File.ReadAllLines(StartWindowForm.database));
-                //Remove EOF
-                installedpackages.RemoveAt(installedpackages.Count-1);
-                //Add package to list
-                installedpackages.Add("["+currentpackage.guid+"]");
-                installedpackages.Add("name="+currentpackage.name);
-                installedpackages.Add("version="+currentpackage.version);
-                installedpackages.Add("requiredpackages="+currentpackage.requiredpackages);
-                installedpackages.Add("author="+currentpackage.author);
-                installedpackages.Add("weburl="+currentpackage.weburl);
-                installedpackages.Add("#EOF");
-                File.Delete(StartWindowForm.database);
-                //Recreate and write out
-                using (StreamWriter sw = File.CreateText(StartWindowForm.database))
-                {
-                    foreach (string item in installedpackages)
-                            {
-                                sw.WriteLine(item);
-                            }
-                }
+                StartWindowForm.installedpackages.Add(currentpackage.guid, currentpackage);
+                updatedatabase();
                 break;
                 
            }   
@@ -116,7 +136,7 @@ namespace BVEPackageInstaller
                 
                 currentpackage.guid = "0";
                 currentpackage.name = "";
-                currentpackage.version = "0";
+                currentpackage.version = 0;
                 currentpackage.requiredpackages = "";
                 currentpackage.author = "";
                 currentpackage.weburl = "";
@@ -143,7 +163,7 @@ namespace BVEPackageInstaller
                                     currentpackage.name = value;
                                     break;
                                 case "version":
-                                    currentpackage.version = value;
+                                    currentpackage.version = Double.Parse(value);
                                     break;
                                 case "requiredpackages":
                                     currentpackage.requiredpackages = value;
@@ -167,7 +187,7 @@ namespace BVEPackageInstaller
                 //We are only worried about displaying the useful bits here
                 label6.Text = currentpackage.name;
                 label7.Text = currentpackage.author;
-                label8.Text = currentpackage.version;
+                label8.Text = Convert.ToString(currentpackage.version);
                 linkLabel1.Text = currentpackage.weburl;
             }
             catch
@@ -178,7 +198,41 @@ namespace BVEPackageInstaller
 
         private void button3_Click(object sender, EventArgs e)
         {
-            tabControl1.SelectedTab = tabPage4;
+            if (!StartWindowForm.installedpackages.ContainsKey(currentpackage.guid))
+            {
+                tabControl1.SelectedTab = tabPage4;
+            }
+            else if (StartWindowForm.installedpackages[currentpackage.guid].version == currentpackage.version)
+            {
+                MessageBox.Show("This package is already installed.");
+            }
+            else if (StartWindowForm.installedpackages[currentpackage.guid].version < currentpackage.version)
+            {
+                if (MessageBox.Show("An older version of this package is currently installed. \n \n Do you wish to replace it?", "", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    tabControl1.SelectedTab = tabPage4;
+                }
+            }
+        }
+
+        private void updatedatabase()
+        {
+            File.Delete(StartWindowForm.database);
+            //Recreate and write out
+            using (StreamWriter sw = File.CreateText(StartWindowForm.database))
+            {
+                foreach (KeyValuePair<string, StartWindowForm.PackageInformation> package in StartWindowForm.installedpackages)
+                {
+                    StartWindowForm.PackageInformation currentpackage = StartWindowForm.installedpackages[package.Key];
+                    sw.WriteLine("[" + currentpackage.guid + "]");
+                    sw.WriteLine("name=" + currentpackage.name);
+                    sw.WriteLine("version=" + currentpackage.version);
+                    sw.WriteLine("requiredpackages=" + currentpackage.requiredpackages);
+                    sw.WriteLine("author=" + currentpackage.author);
+                    sw.WriteLine("weburl=" + currentpackage.weburl);
+                }
+                sw.WriteLine("#EOF");
+            }
         }
     }
 }

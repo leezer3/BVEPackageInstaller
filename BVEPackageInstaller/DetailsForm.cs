@@ -17,7 +17,7 @@ namespace BVEPackageInstaller
             InitializeComponent();
             label6.Text = StartWindowForm.installedpackages[selectedpackage].name;
             label7.Text = StartWindowForm.installedpackages[selectedpackage].author;
-            label8.Text = StartWindowForm.installedpackages[selectedpackage].version;
+            label8.Text = Convert.ToString(StartWindowForm.installedpackages[selectedpackage].version);
             linkLabel1.Text = StartWindowForm.installedpackages[selectedpackage].weburl;
         }
 

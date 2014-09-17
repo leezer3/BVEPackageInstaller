@@ -52,7 +52,7 @@ namespace BVEPackageInstaller
                     PackageInformation currentpackage;
                     currentpackage.guid = "0";
                     currentpackage.name = "";
-                    currentpackage.version = "0";
+                    currentpackage.version = 0;
                     currentpackage.requiredpackages = "";
                     currentpackage.author = "";
                     currentpackage.weburl = "";
@@ -71,7 +71,7 @@ namespace BVEPackageInstaller
                             string guid = line.Substring(1, line.Length - 2);
                             currentpackage.guid = guid;
                             currentpackage.name = "";
-                            currentpackage.version = "0";
+                            currentpackage.version = 0;
                             currentpackage.requiredpackages = "";
                             currentpackage.author = "";
                             currentpackage.weburl = "";
@@ -93,7 +93,7 @@ namespace BVEPackageInstaller
                                         i++;
                                         break;
                                     case "version":
-                                        currentpackage.version = value;
+                                        currentpackage.version = Double.Parse(value);
                                         i++;
                                         break;
                                     case "requiredpackages":
@@ -146,7 +146,7 @@ namespace BVEPackageInstaller
                 ListViewItem item = new ListViewItem(kvp.Value.guid);
                 item.SubItems.Add(kvp.Value.name);
                 item.SubItems.Add(kvp.Value.author);
-                item.SubItems.Add(kvp.Value.version);
+                item.SubItems.Add(Convert.ToString(kvp.Value.version));
                 packagedisplay.Items.Add(item);
             }
             packagedisplay.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
@@ -170,7 +170,7 @@ namespace BVEPackageInstaller
             //The package name
             public string name;
             //The package version number
-            public string version;
+            public double version;
             //Other required packages
             public string requiredpackages;
             //The author of the package
