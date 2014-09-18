@@ -12,7 +12,7 @@ namespace BVEPackageInstaller
 {
     public partial class InstallerForm : Form
     {
-        
+        InstallProgress progress;
         public StartWindowForm.PackageInformation currentpackage;
         public static string GetTemporaryDirectory()
         {
@@ -117,15 +117,50 @@ namespace BVEPackageInstaller
                 break;
             case 3:
                 //Package extraction
-                string extractiondirectory = StartWindowForm.OpenBVELocation + currentpackage.installpath;
-                var installpackage = new SevenZip.SevenZipExtractor(openfile);
-                installpackage.ExtractArchive(Path.Combine(StartWindowForm.OpenBVELocation + "\\" + currentpackage.installpath));
-                StartWindowForm.installedpackages.Add(currentpackage.guid, currentpackage);
-                updatedatabase();
+                if (InstallerWorker.IsBusy != true)
+                {
+                    progress = new InstallProgress();
+                    progress.Show();
+                    InstallerWorker.RunWorkerAsync();
+                }   
                 break;
                 
            }   
         }
+
+        //This event handler processes the extraction of the package
+        private void InstallerWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            string extractiondirectory = StartWindowForm.OpenBVELocation + currentpackage.installpath;
+            var installpackage = new SevenZip.SevenZipExtractor(openfile);
+            installpackage.ExtractArchive(Path.Combine(StartWindowForm.OpenBVELocation + "\\" + currentpackage.installpath));
+            StartWindowForm.installedpackages.Add(currentpackage.guid, currentpackage);
+            //Move the package image to the database if we created one
+            if(File.Exists(Path.Combine(currentpackage.installpath + "\\package.png")))
+            {
+                File.Move(Path.Combine(currentpackage.installpath + "\\package.png"), Path.Combine(StartWindowForm.imagefolder + "\\" + currentpackage.guid + ".png" ));
+            }
+            //Delete the package info file we extracted
+            if (File.Exists(Path.Combine(currentpackage.installpath + "\\packageinfo.bpi")))
+            {
+                File.Delete(Path.Combine(currentpackage.installpath + "\\packageinfo.bpi"));
+            }
+            updatedatabase();
+        }
+
+        //Update the progress percentage
+        private void InstallerWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progress.ProgressValue = e.ProgressPercentage;
+        }
+
+        //Close the installer progress box when the worker has been completed
+        private void InstallerWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            progress.Close();
+        }
+
 
         private void readpackageinfo(string tempextract)
         {
@@ -234,5 +269,6 @@ namespace BVEPackageInstaller
                 sw.WriteLine("#EOF");
             }
         }
+       
     }
 }

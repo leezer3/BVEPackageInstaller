@@ -34,6 +34,8 @@
             this.InstallButton = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // detailsbutton
@@ -63,6 +65,7 @@
             this.packagedisplay.TabIndex = 2;
             this.packagedisplay.UseCompatibleStateImageBehavior = false;
             this.packagedisplay.View = System.Windows.Forms.View.Details;
+            this.packagedisplay.SelectedIndexChanged += new System.EventHandler(this.packagedisplay_SelectedIndexChanged);
             // 
             // InstallButton
             // 
@@ -84,11 +87,20 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Location = new System.Drawing.Point(335, 139);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(157, 157);
+            this.pictureBox1.TabIndex = 5;
+            this.pictureBox1.TabStop = false;
+            // 
             // StartWindowForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(504, 308);
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.InstallButton);
             this.Controls.Add(this.packagedisplay);
@@ -96,6 +108,7 @@
             this.Controls.Add(this.detailsbutton);
             this.Name = "StartWindowForm";
             this.Text = "Form1";
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -109,6 +122,7 @@
         private System.Windows.Forms.Button InstallButton;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }
 

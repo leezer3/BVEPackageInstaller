@@ -55,6 +55,12 @@
     <Compile Include="DetailsForm.Designer.cs">
       <DependentUpon>DetailsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="InstallProgress.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InstallProgress.Designer.cs">
+      <DependentUpon>InstallProgress.cs</DependentUpon>
+    </Compile>
     <Compile Include="InstallerForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -74,6 +80,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="InstallerForm.resx">
       <DependentUpon>InstallerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InstallProgress.resx">
+      <DependentUpon>InstallProgress.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StartWindowForm.resx">
       <DependentUpon>StartWindowForm.cs</DependentUpon>

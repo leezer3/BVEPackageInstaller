@@ -14,6 +14,7 @@ namespace BVEPackageInstaller
         public static Dictionary<string, PackageInformation> installedpackages = new Dictionary<string, PackageInformation>();
         public static string OpenBVELocation;
         public static string database;
+        public static string imagefolder;
         public StartWindowForm()
         {
             
@@ -34,10 +35,15 @@ namespace BVEPackageInstaller
             }
             string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             string programfolder = Path.Combine(appdata + "\\BVEPackageInstaller");
+            imagefolder = Path.Combine(appdata + "\\BVEPackageInstaller\\Images");
             //Load database from file
             if (!Directory.Exists(programfolder))
             {
                 Directory.CreateDirectory(programfolder);
+            }
+            if (!Directory.Exists(imagefolder))
+            {
+                Directory.CreateDirectory(imagefolder);
             }
             database = Path.Combine(programfolder + "\\packages.dat");
             if (!File.Exists(database))
@@ -198,6 +204,24 @@ namespace BVEPackageInstaller
                 {
                     key.SetValue("OpenBVELocation",OpenBVELocation);
                 }
+            }
+        }
+
+        private void packagedisplay_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                Bitmap tempimage;
+                using (FileStream myStream = new FileStream(imagefolder + "\\" + packagedisplay.SelectedItems[0].Text + ".png", FileMode.Open))
+                {
+                    tempimage = (Bitmap)Image.FromStream(myStream);
+                    tempimage.MakeTransparent(Color.FromArgb(0, 0, 255));
+                    this.pictureBox1.Image = tempimage;
+                    this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                }
+            }
+            catch
+            {
             }
         }
 
