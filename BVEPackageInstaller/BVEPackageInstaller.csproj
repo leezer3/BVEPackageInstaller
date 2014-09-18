@@ -49,11 +49,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArchiveContents.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ArchiveContents.Designer.cs">
+      <DependentUpon>ArchiveContents.cs</DependentUpon>
+    </Compile>
     <Compile Include="DetailsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="DetailsForm.Designer.cs">
       <DependentUpon>DetailsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ReadingPackage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ReadingPackage.Designer.cs">
+      <DependentUpon>ReadingPackage.cs</DependentUpon>
     </Compile>
     <Compile Include="InstallProgress.cs">
       <SubType>Form</SubType>
@@ -75,6 +87,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ArchiveContents.resx">
+      <DependentUpon>ArchiveContents.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="DetailsForm.resx">
       <DependentUpon>DetailsForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -83,6 +98,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="InstallProgress.resx">
       <DependentUpon>InstallProgress.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ReadingPackage.resx">
+      <DependentUpon>ReadingPackage.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StartWindowForm.resx">
       <DependentUpon>StartWindowForm.cs</DependentUpon>
@@ -106,6 +124,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\archive.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

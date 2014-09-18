@@ -209,19 +209,26 @@ namespace BVEPackageInstaller
 
         private void packagedisplay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            try
+            if (packagedisplay.SelectedItems.Count == 0)
             {
-                Bitmap tempimage;
-                using (FileStream myStream = new FileStream(imagefolder + "\\" + packagedisplay.SelectedItems[0].Text + ".png", FileMode.Open))
-                {
-                    tempimage = (Bitmap)Image.FromStream(myStream);
-                    tempimage.MakeTransparent(Color.FromArgb(0, 0, 255));
-                    this.pictureBox1.Image = tempimage;
-                    this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-                }
+                pictureBox1.Image = BVEPackageInstaller.Properties.Resources.OpenBVELogo;
             }
-            catch
+            else
             {
+                try
+                {
+                    Bitmap tempimage;
+                    using (FileStream myStream = new FileStream(imagefolder + "\\" + packagedisplay.SelectedItems[0].Text + ".png", FileMode.Open))
+                    {
+                        tempimage = (Bitmap)Image.FromStream(myStream);
+                        tempimage.MakeTransparent(Color.FromArgb(0, 0, 255));
+                        this.pictureBox1.Image = tempimage;
+                        this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                    }
+                }
+                catch
+                {
+                }
             }
         }
 

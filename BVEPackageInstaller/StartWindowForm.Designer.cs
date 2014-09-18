@@ -69,9 +69,10 @@
             // 
             // InstallButton
             // 
+            this.InstallButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.InstallButton.Location = new System.Drawing.Point(12, 226);
             this.InstallButton.Name = "InstallButton";
-            this.InstallButton.Size = new System.Drawing.Size(144, 23);
+            this.InstallButton.Size = new System.Drawing.Size(181, 51);
             this.InstallButton.TabIndex = 3;
             this.InstallButton.Text = "Install New Package...";
             this.InstallButton.UseVisualStyleBackColor = true;
@@ -79,7 +80,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(12, 162);
+            this.button1.Location = new System.Drawing.Point(173, 133);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(144, 23);
             this.button1.TabIndex = 4;
@@ -89,9 +90,12 @@
             // 
             // pictureBox1
             // 
+            this.pictureBox1.Image = global::BVEPackageInstaller.Properties.Resources.OpenBVELogo;
+            this.pictureBox1.InitialImage = null;
             this.pictureBox1.Location = new System.Drawing.Point(335, 139);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(157, 157);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 5;
             this.pictureBox1.TabStop = false;
             // 

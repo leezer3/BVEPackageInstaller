@@ -13,7 +13,10 @@ namespace BVEPackageInstaller
     public partial class InstallerForm : Form
     {
         InstallProgress progress;
+        ReadingPackage progress1;
+        ArchiveContents contents;
         public StartWindowForm.PackageInformation currentpackage;
+        public static List<string> archivecontents = new List<string>();
         public static string GetTemporaryDirectory()
         {
             string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -45,6 +48,11 @@ namespace BVEPackageInstaller
             {
                 //We're a package, so go to the package tab
                 tabControl1.SelectedTab = tabPage2;
+            }
+            else if (Path.GetExtension(openfile) == ".zip" || Path.GetExtension(openfile) == ".7z" || Path.GetExtension(openfile) == ".rar")
+            {
+                //We're an archive, so go to the archive tab
+                tabControl1.SelectedTab = tabPage3;
             }
             else
             {
@@ -115,6 +123,15 @@ namespace BVEPackageInstaller
                     }
                 }
                 break;
+            case 2:
+                //Try to load the contents of an archive
+                if (ArchiveInfoWorker.IsBusy != true)
+                {
+                    progress1 = new ReadingPackage();
+                    progress1.Show();
+                    ArchiveInfoWorker.RunWorkerAsync();
+                }
+                break;
             case 3:
                 //Package extraction
                 if (InstallerWorker.IsBusy != true)
@@ -137,14 +154,14 @@ namespace BVEPackageInstaller
             installpackage.ExtractArchive(Path.Combine(StartWindowForm.OpenBVELocation + "\\" + currentpackage.installpath));
             StartWindowForm.installedpackages.Add(currentpackage.guid, currentpackage);
             //Move the package image to the database if we created one
-            if(File.Exists(Path.Combine(currentpackage.installpath + "\\package.png")))
+            if (File.Exists(Path.Combine(StartWindowForm.OpenBVELocation + "\\package.png")))
             {
-                File.Move(Path.Combine(currentpackage.installpath + "\\package.png"), Path.Combine(StartWindowForm.imagefolder + "\\" + currentpackage.guid + ".png" ));
+                File.Move(Path.Combine(StartWindowForm.OpenBVELocation  + "\\package.png"), Path.Combine(StartWindowForm.imagefolder + "\\" + currentpackage.guid + ".png"));
             }
             //Delete the package info file we extracted
-            if (File.Exists(Path.Combine(currentpackage.installpath + "\\packageinfo.bpi")))
+            if (File.Exists(Path.Combine(StartWindowForm.OpenBVELocation + "\\packageinfo.bpi")))
             {
-                File.Delete(Path.Combine(currentpackage.installpath + "\\packageinfo.bpi"));
+                File.Delete(Path.Combine(StartWindowForm.OpenBVELocation + "\\packageinfo.bpi"));
             }
             updatedatabase();
         }
@@ -159,6 +176,129 @@ namespace BVEPackageInstaller
         private void InstallerWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             progress.Close();
+        }
+
+        //This event handler processes the archive's contents
+        private void ArchiveInfoWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            var readarchive = new SevenZip.SevenZipExtractor(openfile);
+            //Read the archive's contents into our list
+            archivecontents = readarchive.ArchiveFileNames.ToList<string>();
+            if (archivecontents.Count > 0)
+            {
+                {
+                    int csvfiles = 0;
+                    int b3dfiles = 0;
+                    int soundfiles = 0;
+                    int imagefiles = 0;
+                    int trainfiles = 0;
+                    bool pathfound = false;
+                    foreach (string item in archivecontents)
+                    {
+                        //Test potential paths
+                        //
+                        //Complete, easily identifiable packages
+                        if (item.StartsWith("railway\\", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentpackage.installpath = "";
+                            label2.Text = "ROUTE";
+                            pathfound = true;
+                            break;
+                        }
+                        else if (item.StartsWith("route\\", StringComparison.OrdinalIgnoreCase) || item.StartsWith("object\\", StringComparison.OrdinalIgnoreCase) || item.StartsWith("sound\\", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentpackage.installpath = "\\Railway";
+                            label2.Text = "ROUTE COMPONENT (Full path found)";
+                            pathfound = true;
+                            break;
+                        }
+                        else if (item.StartsWith("train\\", StringComparison.OrdinalIgnoreCase))
+                        {
+                            currentpackage.installpath = "";
+                            label2.Text = "TRAIN (Full path Found)";
+                            pathfound = true;
+                            break;
+                        }
+                        else if (item.EndsWith("train.dat", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //We've found a train.dat file or a DLL
+                            trainfiles++;
+                        }
+                        else if (item.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //We've found a CSV file, increment the counter by one
+                            csvfiles++;
+                        }
+                        else if (item.EndsWith(".b3d", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //We've found a CSV file, increment the counter by one
+                            b3dfiles++;
+                        }
+                        else if (item.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".mp3", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //We've found a CSV file, increment the counter by one
+                            soundfiles++;
+                        }
+                        else if (item.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) || item.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //We've found an image file, increment the counter by one
+                            imagefiles++;
+                        }
+                    }
+                    if (pathfound == true)
+                    {
+                        //We've found the path
+                        label5.Text = currentpackage.installpath;
+                    }
+                    else
+                    {
+                        //No easily identifiable path was found- Try and figure it out manually from the archive contents.
+                        if ((csvfiles < 50 || b3dfiles < 50) && imagefiles < 50)
+                        {
+                            //We've got more than 50 objects and images
+                            //This suggests that this is an *object* archive
+                            currentpackage.installpath = "\\Railway\\Object";
+                            label2.Text = "ROUTE OBJECTS (Full path not found)";
+                        }
+                        else if (soundfiles < 10 && trainfiles == 0)
+                        {
+                            //We've got more than 10 sounds and no train components
+                            //This suggests that this is a sounds package
+                            currentpackage.installpath = "\\Railway\\Sound";
+                            label2.Text = "ROUTE SOUNDS (Full path not found)";
+                        }
+                        else if (csvfiles < 5 && imagefiles > 10)
+                        {
+                            //We've got more than 5 CSV files and less than 10 images
+                            //This suggests that this is a route package
+                            currentpackage.installpath = "\\Railway\\Route";
+                            label2.Text = "ROUTEFILES (Full path not found)";
+                        }
+                        else if (soundfiles < 10 && trainfiles < 0)
+                        {
+                            //We've got more than 10 sounds and train components
+                            //This suggests that this is a train
+                            currentpackage.installpath = "\\Train";
+                            label2.Text = "Train (Full path not found)";
+                        }
+                        label5.Text = currentpackage.installpath;
+                    }
+                    
+                }
+            }
+        }
+
+        //Update the progress percentage
+        private void ArchiveInfoWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            progress1.ProgressValue = e.ProgressPercentage;
+        }
+
+        //Close the installer progress box when the worker has been completed
+        private void ArchiveInfoWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            progress1.Close();
         }
 
 
@@ -268,6 +408,12 @@ namespace BVEPackageInstaller
                 }
                 sw.WriteLine("#EOF");
             }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            contents = new ArchiveContents(archivecontents);
+            contents.Show();
         }
        
     }
