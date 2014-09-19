@@ -143,12 +143,21 @@ namespace BVEPackageInstaller
             
             InitializeComponent();
             //Populate package list display
+            populatepackages();
+            
+        }
+
+        public void populatepackages()
+        {
+            packagedisplay.Clear();
             packagedisplay.Columns.Add("Package ID");
             packagedisplay.Columns.Add("Package Name");
             packagedisplay.Columns.Add("Package Author");
             packagedisplay.Columns.Add("Package Version");
-            foreach (KeyValuePair<string, PackageInformation> kvp in installedpackages)
+
+            foreach (KeyValuePair<string, PackageInformation> kvp in StartWindowForm.installedpackages)
             {
+                
                 ListViewItem item = new ListViewItem(kvp.Value.guid);
                 item.SubItems.Add(kvp.Value.name);
                 item.SubItems.Add(kvp.Value.author);
@@ -157,14 +166,21 @@ namespace BVEPackageInstaller
             }
             packagedisplay.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
             packagedisplay.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-            
+            packagedisplay.Refresh();
         }
 
         private void detailsbutton_Click(object sender, EventArgs e)
         {
-            using (DetailsForm childform = new DetailsForm(packagedisplay.SelectedItems[0].Text))
+            try
             {
-                childform.ShowDialog(this);
+                using (DetailsForm childform = new DetailsForm(packagedisplay.SelectedItems[0].Text))
+                {
+                    childform.ShowDialog(this);
+                }
+            }
+            catch
+            {
+                //No package selected, twiddle
             }
         }
 
@@ -192,9 +208,10 @@ namespace BVEPackageInstaller
             using (InstallerForm childform = new InstallerForm())
             {
                 childform.ShowDialog(this);
+                populatepackages();
             }
         }
-
+        
         private void button1_Click(object sender, EventArgs e)
         {
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
@@ -231,6 +248,8 @@ namespace BVEPackageInstaller
                 }
             }
         }
+
+        
 
     }
 }

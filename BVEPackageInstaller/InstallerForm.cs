@@ -12,6 +12,12 @@ namespace BVEPackageInstaller
 {
     public partial class InstallerForm : Form
     {
+        public int csvfiles = 0;
+        public int b3dfiles = 0;
+        public int soundfiles = 0;
+        public int imagefiles = 0;
+        public int trainfiles = 0;
+        public bool pathfound;
         InstallProgress progress;
         ReadingPackage progress1;
         ArchiveContents contents;
@@ -27,9 +33,13 @@ namespace BVEPackageInstaller
         {
             InitializeComponent();
             tabControl1.SelectedIndexChanged += new EventHandler(tabControl1_SelectedIndexChanged);
+            tabControl1.Appearance = TabAppearance.FlatButtons;
+            tabControl1.ItemSize = new Size(0, 1);
+            tabControl1.SizeMode = TabSizeMode.Fixed;
 
         }
         string openfile;
+        string packageimage;
         private void button1_Click(object sender, EventArgs e)
         {
             openFileDialog1.ShowDialog();
@@ -112,7 +122,6 @@ namespace BVEPackageInstaller
                         using (FileStream myStream = new FileStream(tempextract_image, FileMode.Open))
                         {
                             tempimage = (Bitmap)Image.FromStream(myStream);
-                            tempimage.MakeTransparent(Color.FromArgb(0, 0, 255));
                             this.pictureBox1.Image = tempimage;
                             this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
                         }
@@ -163,6 +172,11 @@ namespace BVEPackageInstaller
             {
                 File.Delete(Path.Combine(StartWindowForm.OpenBVELocation + "\\packageinfo.bpi"));
             }
+            //If we have a package image set for an archive, copy it rather than moving it
+            if (File.Exists(packageimage))
+            {
+                File.Copy(packageimage, Path.Combine(StartWindowForm.imagefolder + "\\" + currentpackage.guid + ".png"));
+            }
             updatedatabase();
         }
 
@@ -188,12 +202,6 @@ namespace BVEPackageInstaller
             if (archivecontents.Count > 0)
             {
                 {
-                    int csvfiles = 0;
-                    int b3dfiles = 0;
-                    int soundfiles = 0;
-                    int imagefiles = 0;
-                    int trainfiles = 0;
-                    bool pathfound = false;
                     foreach (string item in archivecontents)
                     {
                         //Test potential paths
@@ -202,21 +210,30 @@ namespace BVEPackageInstaller
                         if (item.StartsWith("railway\\", StringComparison.OrdinalIgnoreCase))
                         {
                             currentpackage.installpath = "";
-                            label2.Text = "ROUTE";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "ROUTE";
+                            });
                             pathfound = true;
                             break;
                         }
                         else if (item.StartsWith("route\\", StringComparison.OrdinalIgnoreCase) || item.StartsWith("object\\", StringComparison.OrdinalIgnoreCase) || item.StartsWith("sound\\", StringComparison.OrdinalIgnoreCase))
                         {
                             currentpackage.installpath = "\\Railway";
-                            label2.Text = "ROUTE COMPONENT (Full path found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "ROUTE COMPONENT (Full path found)";
+                            });
                             pathfound = true;
                             break;
                         }
                         else if (item.StartsWith("train\\", StringComparison.OrdinalIgnoreCase))
                         {
                             currentpackage.installpath = "";
-                            label2.Text = "TRAIN (Full path Found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "TRAIN (Full path found)";
+                            });
                             pathfound = true;
                             break;
                         }
@@ -246,12 +263,8 @@ namespace BVEPackageInstaller
                             imagefiles++;
                         }
                     }
-                    if (pathfound == true)
-                    {
-                        //We've found the path
-                        label5.Text = currentpackage.installpath;
-                    }
-                    else
+
+                    if (pathfound == false)
                     {
                         //No easily identifiable path was found- Try and figure it out manually from the archive contents.
                         if ((csvfiles < 50 || b3dfiles < 50) && imagefiles < 50)
@@ -259,31 +272,48 @@ namespace BVEPackageInstaller
                             //We've got more than 50 objects and images
                             //This suggests that this is an *object* archive
                             currentpackage.installpath = "\\Railway\\Object";
-                            label2.Text = "ROUTE OBJECTS (Full path not found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "ROUTE OBJECTS (Full path not found)";
+                            });
                         }
                         else if (soundfiles < 10 && trainfiles == 0)
                         {
                             //We've got more than 10 sounds and no train components
                             //This suggests that this is a sounds package
                             currentpackage.installpath = "\\Railway\\Sound";
-                            label2.Text = "ROUTE SOUNDS (Full path not found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "ROUTE SOUNDS (Full path not found)";
+                            });
                         }
                         else if (csvfiles < 5 && imagefiles > 10)
                         {
                             //We've got more than 5 CSV files and less than 10 images
                             //This suggests that this is a route package
                             currentpackage.installpath = "\\Railway\\Route";
-                            label2.Text = "ROUTEFILES (Full path not found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "ROUTEFILES (Full path not found)";
+                            });
                         }
                         else if (soundfiles < 10 && trainfiles < 0)
                         {
                             //We've got more than 10 sounds and train components
                             //This suggests that this is a train
                             currentpackage.installpath = "\\Train";
-                            label2.Text = "Train (Full path not found)";
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                label2.Text = "TRAIN (Full path not found)";
+                            });
                         }
-                        label5.Text = currentpackage.installpath;
+                        
                     }
+                    //Print Path
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        label5.Text = Path.Combine(StartWindowForm.OpenBVELocation, currentpackage.installpath);
+                    });
                     
                 }
             }
@@ -408,6 +438,7 @@ namespace BVEPackageInstaller
                 }
                 sw.WriteLine("#EOF");
             }
+            
         }
 
         private void button6_Click(object sender, EventArgs e)
@@ -415,6 +446,42 @@ namespace BVEPackageInstaller
             contents = new ArchiveContents(archivecontents);
             contents.Show();
         }
-       
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            tabControl1.SelectedTab = tabPage5;
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            //Load the values from the text boxes
+            //Set the GUID to be the archive's filename for the moment
+            //Change this??
+            currentpackage.guid = Path.GetFileNameWithoutExtension(openfile);
+            currentpackage.name = textBox6.Text;
+            currentpackage.author = textBox7.Text;
+            currentpackage.version = (double)numericUpDown1.Value;
+            currentpackage.weburl = textBox8.Text;
+            //Switch to the installer tab and voila.....
+            tabControl1.SelectedTab = tabPage4;
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            openFileDialog2.ShowDialog();
+            packageimage = openFileDialog1.FileName;
+            Bitmap tempimage;
+            using (FileStream myStream = new FileStream(packageimage, FileMode.Open))
+            {
+                tempimage = (Bitmap)Image.FromStream(myStream);
+                this.pictureBox1.Image = tempimage;
+                this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            }
+        }   
     }
 }
